@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymTracker - Projektni Izvještaj</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #F97316;
+      --primary-hover: #EA580C;
+      --background: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text: #0F172A;
+      --text-muted: #475569;
+      --border: #E2E8F0;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Print styling support */
+    @media print {
+      body {
+        background-color: #FFFFFF;
+        padding: 0;
+      }
+      .no-print {
+        display: none;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .card {
+        box-shadow: none !important;
+        border: 1px solid #CBD5E1 !important;
+      }
+    }
+
+    /* Header & Cover */
+    .cover-card {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: #FFFFFF;
+      border-radius: 24px;
+      padding: 60px 40px;
+      margin-bottom: 40px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0) 70%);
+      pointer-events: none;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background-color: rgba(249, 115, 22, 0.15);
+      border: 1.5px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .app-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #F8FAFC;
+    }
+
+    .cover-title {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      color: #94A3B8;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    .project-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      border-top: 1px solid #334155;
+      padding-top: 24px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #64748B;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .meta-value {
+      font-size: 15px;
+      color: #E2E8F0;
+      font-weight: 600;
+    }
+
+    /* Standard Cards */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background-color: var(--primary);
+      border-radius: 2px;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    /* Highlight Section */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .badge-primary {
+      background-color: #FFF7ED;
+      color: #EA580C;
+      border: 1px solid #FFEDD5;
+    }
+
+    .badge-success {
+      background-color: #ECFDF5;
+      color: #059669;
+      border: 1px solid #D1FAE5;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .tech-pill {
+      background-color: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .tech-pill span {
+      display: block;
+      font-size: 11px;
+      color: #64748B;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* Print Button */
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .btn-print {
+      background-color: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-print:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Feature Breakdown Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #F8FAFC;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .code-box {
+      background-color: #0F172A;
+      color: #F8FAFC;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Print Navigation -->
+    <div class="print-bar no-print">
+      <button class="btn-print" onclick="window.print()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Spremi kao PDF / Ispiši
+      </button>
+    </div>
+
+    <!-- COVER SHEET -->
+    <div class="cover-card">
+      <div class="logo-container">
+        <div class="logo-icon">🏋️‍♂️</div>
+        <span class="app-title">GymTracker Mobile</span>
+      </div>
+      <h1 class="cover-title">Projektni Izvještaj o Implementaciji</h1>
+      <p class="cover-subtitle">Razvoj mobilne aplikacije za praćenje treninga u radnom okviru React Native & Expo</p>
+      
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Autori Projekta</span>
+          <span class="meta-value">Kristijan Slišković</span>
+          <span class="meta-value">Frano Vranjković</span>
+          <span class="meta-value">Ivan Luetić</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Kolegij</span>
+          <span class="meta-value">Programiranje Mobilnih Uređaja</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Datum</span>
+          <span class="meta-value">Lipanj, 2026.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: CILJ PROJEKTA -->
+    <div class="card">
+      <div class="badge badge-primary">Ciljevi i Opis</div>
+      <h2>1. Cilj Projekta & Aplikacije</h2>
+      <p>
+        Glavni cilj projekta je razvoj **GymTracker** mobilne aplikacije koja korisnicima pruža intuitivno sučelje za planiranje, praćenje i analizu vlastitih sportskih treninga. Uređaj rješava svakodnevni problem sportaša – potrebu za jednostavnom, brzom i vizualno privlačnom digitalnom bilježnicom za treninge, koja radi u realnom vremenu i nudi personalizirano korisničko iskustvo.
+      </p>
+      <p>Ključni ciljevi implementirani u ovoj fazi projekta:</p>
+      <ul>
+        <li><strong>Sigurnost i Autentifikacija:</strong> Osigurati da svaki korisnik ima svoj profil te da su podaci o treninzima strogo privatni i zaštićeni.</li>
+        <li><strong>Perzistencija u Stvarnom Vremenu:</strong> Omogućiti trenutni unos i spremanje podataka u Firebase Cloud bazu s real-time sinkronizacijom.</li>
+        <li><strong>Prilagođenost Uređajima (UX/UI):</strong> Optimizirati sučelje za razne mobilne uređaje, s naglaskom na rješavanje hardverskih specifičnosti (kao što je Samsung navigacijska traka).</li>
+      </ul>
+    </div>
+
+    <!-- SECTION 2: TEHNOLOŠKI STACK -->
+    <div class="card">
+      <div class="badge badge-primary">Arhitektura</div>
+      <h2>2. Tehnološki Stack</h2>
+      <p>
+        Aplikacija je izgrađena koristeći moderne industrijske standarde za cross-platform razvoj mobilnih aplikacija:
+      </p>
+      <div class="tech-grid">
+        <div class="tech-pill">
+          React Native & Expo
+          <span>V54.0 (Expo Go)</span>
+        </div>
+        <div class="tech-pill">
+          Expo Router
+          <span>File-based navigacija</span>
+        </div>
+        <div class="tech-pill">
+          Firebase Auth
+          <span>Sigurna prijava korisnika</span>
+        </div>
+        <div class="tech-pill">
+          Cloud Firestore
+          <span>Real-time NoSQL baza</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 3: PRVI DIO - AUTENTIFIKACIJA -->
+    <div class="card">
+      <div class="badge badge-success">Prvi Dio Projekta</div>
+      <h2>3. Sustav Autentifikacije (Login & Registracija)</h2>
+      <p>
+        U prvom dijelu implementiran je cjeloviti sustav registracije i prijave korisnika. Korištenjem <strong>Firebase Authentication</strong> modula omogućena je provjera identiteta u realnom vremenu.
+      </p>
+      <p><strong>Značajke sustava autentifikacije:</strong></p>
+      <ul>
+        <li><strong>Registracija:</strong> Korisnik unosi email adresu, lozinku i potvrdu lozinke. Sučelje u realnom vremenu provjerava poklapanje lozinki (vizualni indikatori u zelenoj/crvenoj boji) te duljinu (minimalno 6 znakova).</li>
+        <li><strong>Prijava:</strong> Integrirana provjera valjanosti i hendlanje Firebase grešaka (npr. pogrešna lozinka, nepostojeći korisnik). Dodana je mogućnost togglea vidljivosti lozinke ("oko" ikona).</li>
+        <li><strong>Auth Context & Guard:</strong> Cijela aplikacija je omotana u React Context (<code>AuthContext</code>) koji prati stanje prijave (<code>onAuthStateChanged</code>). Zaštićeni router (<code>AuthGate</code>) automatski preusmjerava neprijavljene korisnike na prijavu, a prijavljene na Dashboard.</li>
+      </ul>
+    </div>
+
+    <!-- SECTION 4: DRUGI DIO - TRENINZI (WORKOUTS) -->
+    <div class="card">
+      <div class="badge badge-success">Drugi Dio Projekta</div>
+      <h2>4. Praćenje Treninga u Stvarnom Vremenu</h2>
+      <p>
+        Kao glavna funkcionalnost aplikacije (ekvivalent "Games" taba iz prezentacija) implementiran je modul **Treninzi**. Omogućeno je spremanje i prikaz strukturiranih podataka o fizičkim aktivnostima.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Naziv Komponente</th>
+            <th>Uloga u Aplikaciji</th>
+            <th>Ključne Tehnologije</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>WorkoutsScreen (two.tsx)</strong></td>
+            <td>Glavni prikaz popisa treninga s gumbom za dodavanje.</td>
+            <td>FlatList, useSafeAreaInsets, Firestore listener</td>
+          </tr>
+          <tr>
+            <td><strong>WorkoutCard</strong></td>
+            <td>Prikaz detalja treninga (Naziv, trajanje, opis) s bojom po kategoriji.</td>
+            <td>React Native Styles, Color-coding mape</td>
+          </tr>
+          <tr>
+            <td><strong>AddWorkoutModal</strong></td>
+            <td>Modalni sheet s formom za unos novog treninga.</td>
+            <td>Modal, ScrollView, TextInput, interaktivni čipovi</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>Firestore Integracija & Klijentsko Sortiranje:</strong></p>
+      <p>
+        Kako bismo omogućili da aplikacija radi bez potrebe za konfiguriranjem složenih indeksa u Firestore konzoli, pretraživanje se vrši jednostavnim upitom po <code>userId</code>-u prijavljenog korisnika, a sortiranje se vrši **klijentski** na temelju vremenskih oznaka:
+      </p>
+      <div class="code-box">
+// Klijentsko sortiranje bez potrebe za Firestore indeksima
+list.sort((a, b) => {
+  const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0;
+  const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0;
+  return dateB - dateA;
+});
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 5: POBOLJŠANJA, OPTIMIZACIJE I Samsung UI -->
+    <div class="card">
+      <div class="badge badge-primary">Optimizacija & UX</div>
+      <h2>5. Napredne Optimizacije i Prilagodbe Sučelja</h2>
+      <p>
+        Tijekom razvoja, posebna pozornost posvećena je performansama i prilagodbi specifičnim Android uređajima:
+      </p>
+      <ul>
+        <li>
+          <strong>Samsung navigacijska traka (3 tipke):</strong> 
+          Na Samsung uređajima s uključenom donjom trakom (Recent, Home, Back), fiksne visine tab bara mogu uzrokovati preklapanje. Korištenjem <code>useSafeAreaInsets</code> iz <code>react-native-safe-area-context</code>, visina donjeg tab bara i njegovi paddinzi se računaju <strong>dinamički</strong>. Sadržaj se automatski pozicionira točno iznad sistemskih tipki.
+        </li>
+        <li>
+          <strong>Rješenje blokiranja forme (Optimistično ažuriranje):</strong>
+          Prilikom spremanja novog treninga, čekanje odgovora servera stvaralo je beskonačni loader (spinner). Uklanjanjem <code>await</code> ključne riječi, sučelje se zatvara trenutačno (optimistično), a Firestore u pozadini asinkrono ažurira bazu, dok real-time listener odmah prikazuje novost.
+        </li>
+        <li>
+          <strong>Dashboard integracija:</strong>
+          Početni ekran (Dashboard) u stvarnom vremenu računa tjedni broj treninga (zadnjih 7 dana), ukupno odrađene sate u povijesti te trenutni "Streak" (niz dana aktivnog vježbanja), uz dinamički ispis zadnja 3 treninga.
+        </li>
+      </ul>
+    </div>
+
+    <!-- SECTION 6: ZAKLJUČAK -->
+    <div class="card">
+      <div class="badge badge-primary">Zaključak</div>
+      <h2>6. Status Projekta i Daljnji Plan</h2>
+      <p>
+        Projekt uspješno kombinira zahtjeve iz prve dvije prezentacije: stabilnu autentifikaciju s React Contextom i real-time rad s Firestore bazom podataka po principu korisničkih sesija. 
+      </p>
+      <p>U idućoj fazi razvoja planira se:</p>
+      <ol>
+        <li>Integracija Supabase Storage-a za upload slika i ikona vježbi.</li>
+        <li>Dodavanje hardverskih funkcionalnosti (GPS praćenje trčanja i akcelerometar za brojanje koraka).</li>
+        <li>Interaktivni grafikoni tjednog i mjesečnog napretka.</li>
+      </ol>
+    </div>
+
+  </div>
+
+</body>
+</html>
