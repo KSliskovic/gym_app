@@ -174,17 +174,30 @@ export default function SessionScreen() {
 
   const handleFinish = () => {
     if (exercises.length === 0) {
-      Alert.alert("Nema vježbi", "Dodaj barem jednu vježbu.");
+      if (Platform.OS === "web") {
+        window.alert("Nema vježbi\nDodaj barem jednu vježbu.");
+      } else {
+        Alert.alert("Nema vježbi", "Dodaj barem jednu vježbu.");
+      }
       return;
     }
-    Alert.alert(
-      "Završi trening?",
-      `Trajanje: ${formatTime(elapsedSec)}\nUkupna kilaža: ${totalVolume.toFixed(1)} kg\nSetova: ${completedSets}/${totalSets}`,
-      [
-        { text: "Nastavi trening", style: "cancel" },
-        { text: "Završi i spremi", onPress: saveSession },
-      ]
-    );
+    
+    const msg = `Trajanje: ${formatTime(elapsedSec)}\nUkupna kilaža: ${totalVolume.toFixed(1)} kg\nSetova: ${completedSets}/${totalSets}`;
+    
+    if (Platform.OS === "web") {
+      if (window.confirm(`Završi trening?\n\n${msg}`)) {
+        saveSession();
+      }
+    } else {
+      Alert.alert(
+        "Završi trening?",
+        msg,
+        [
+          { text: "Nastavi trening", style: "cancel" },
+          { text: "Završi i spremi", onPress: saveSession },
+        ]
+      );
+    }
   };
 
   const saveSession = async () => {
@@ -238,17 +251,24 @@ export default function SessionScreen() {
   };
 
   const handleDiscard = () => {
-    Alert.alert("Odustani od treninga?", "Svi podaci bit će izgubljeni.", [
-      { text: "Nastavi trening", style: "cancel" },
-      {
-        text: "Odustani",
-        style: "destructive",
-        onPress: () => {
-          clearInterval(timerRef.current!);
-          router.back();
+    if (Platform.OS === "web") {
+      if (window.confirm("Odustani od treninga?\nSvi podaci bit će izgubljeni.")) {
+        clearInterval(timerRef.current!);
+        router.back();
+      }
+    } else {
+      Alert.alert("Odustani od treninga?", "Svi podaci bit će izgubljeni.", [
+        { text: "Nastavi trening", style: "cancel" },
+        {
+          text: "Odustani",
+          style: "destructive",
+          onPress: () => {
+            clearInterval(timerRef.current!);
+            router.back();
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────────
