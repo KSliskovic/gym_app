@@ -30,8 +30,6 @@
 | **5. Aktivna Trening Sesija** | Spremanje i ažuriranje podataka serija u realnom vremenu u bazi. | Kristijan | Završeno |
 | **6. Napredna Statistika** | Pregled i analitika podataka dohvaćenih iz baze. | Ivan Luetić | Završeno |
 | **7. Kalendar treninga** | Dohvaćanje i kalendarski pregled odrađenih treninga iz baze. | Ivan Luetić | Završeno |
-| **8. Korisnički profil i postavke** | Unos korisničkih podataka i izračun makronutrijenata, uz lokalno spremanje. | Kristijan | Završeno |
-
 ---
 
 ## 3. Sprint
@@ -55,4 +53,6 @@
 | **2. Ekran za praćenje koraka** | Prikaz značajki temeljenih na senzoru (trenutni koraci i kalorije). | Ivan Luetić | Završeno |
 | **3. Vizualizacija podataka senzora** | Prikaz povijesti podataka sa senzora (zadnjih 7 dana) na grafikonu. | Ivan Luetić | Završeno |
 | **4. Dijeljenje treninga (QR kod)** | Prijenos splitova između korisnika putem generiranja i skeniranja QR koda. | Kristijan | Završeno |
-| **5. QA Testiranje** | Detaljno testiranje senzora, uploadanja i komunikacije s bazom na uređajima. | Frano Vranjković | U tijeku |
+| **5. Korisnički profil i postavke** | Unos korisničkih podataka i izračun makronutrijenata, uz lokalno spremanje. | Kristijan | Završeno |
+| **6. Ažuriranje pedometra (Google Fit)** | Prijelaz na stabilnije praćenje koraka na Androidu, potencijalno putem Google Fit integracije. | Ivan Luetić | Nije započeto |
+| **7. QA Testiranje** | Detaljno testiranje senzora, uploadanja i komunikacije s bazom na uređajima. | Frano Vranjković | U tijeku |
