@@ -90,33 +90,41 @@ export default function StepsScreen() {
   }, [progressPercent]);
 
   const fetchWeekData = async () => {
-    const days: WeekDay[] = [];
-    const dayLabels = ["Ned", "Pon", "Uto", "Sri", "Čet", "Pet", "Sub"];
-    const now = new Date();
-
+    const pastDays: WeekDay[] = [];
     for (let i = 6; i >= 0; i--) {
-      const end = new Date(now);
-      end.setDate(now.getDate() - i);
-      end.setHours(23, 59, 59, 999);
-
-      const start = new Date(end);
+      const start = new Date();
+      start.setDate(start.getDate() - i);
       start.setHours(0, 0, 0, 0);
 
-      let steps = 0;
-      try {
-        const result = await Pedometer.getStepCountAsync(start, end);
-        steps = result.steps;
-      } catch (_) {
-        steps = 0;
-      }
+      const end = new Date();
+      end.setDate(end.getDate() - i);
+      end.setHours(23, 59, 59, 999);
 
-      days.push({
-        label: dayLabels[end.getDay()],
-        steps,
-      });
+      try {
+        if (Platform.OS === "android") {
+          // expo-sensors ne podržava povijest na Androidu, bacit će grešku
+          // Stavit ćemo 0 za graf da izbjegnemo rušenje ekrana
+          pastDays.push({
+            label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
+            steps: 0,
+          });
+        } else {
+          const result = await Pedometer.getStepCountAsync(start, end);
+          pastDays.push({
+            label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
+            steps: result.steps,
+          });
+        }
+      } catch (e) {
+        // Fallback u slučaju greške
+        pastDays.push({
+          label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
+          steps: 0,
+        });
+      }
     }
 
-    setWeekData(days);
+    setWeekData(pastDays);
   };
 
   const maxWeekSteps = Math.max(...weekData.map((d) => d.steps), 1);
