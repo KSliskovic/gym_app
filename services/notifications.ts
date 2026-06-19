@@ -20,11 +20,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return finalStatus === "granted";
 }
 
-/**
- * Schedules a weekly repeating local notification for a given day/time.
- * `day` follows JS Date.getDay() convention: 0 = Sunday ... 6 = Saturday.
- * Returns the notification identifier so it can be cancelled later.
- */
 export async function scheduleWeeklyWorkoutNotification(
   day: number,
   time: string,
@@ -39,10 +34,9 @@ export async function scheduleWeeklyWorkoutNotification(
   if (notifHour < 0) {
     notifHour += 24;
     notifDay = day - 1;
-    if (notifDay < 0) notifDay = 6; // wrap Sunday -> Saturday
+    if (notifDay < 0) notifDay = 6; // wrap Sunday  Saturday
   }
 
-  // expo-notifications weekday: 1 = Sunday ... 7 = Saturday
   const weekday = notifDay + 1;
 
   try {
