@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.gym_app"
+      "package": "com.anonymous.gym_app",
+      "permissions": ["android.permission.health.READ_STEPS"]
     },
     "web": {
       "bundler": "metro",
@@ -27,6 +28,18 @@
     },
     "plugins": [
       "expo-router",
+      "expo-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "minSdkVersion": 26
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -38,6 +51,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "25cad6c6-e056-461e-a366-6343a96be2ca"
+      }
     }
   }
 }

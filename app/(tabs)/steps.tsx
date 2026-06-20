@@ -1,86 +1,38 @@
-import { useEffect, useState, useRef } from "react";
+import { usePedometer } from "@/services/pedometer";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useRef } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Platform,
   Alert,
   Animated,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Pedometer } from "expo-sensors";
 
 const DAILY_GOAL = 10000;
-
-// Calories burned per step (rough estimate ~0.04 kcal/step for avg person)
 const KCAL_PER_STEP = 0.04;
-
-// Distance per step in meters (avg ~0.762m)
 const METERS_PER_STEP = 0.762;
-
-type WeekDay = {
-  label: string;
-  steps: number;
-};
 
 export default function StepsScreen() {
   const insets = useSafeAreaInsets();
+  const {
+    isAvailable,
+    isLoading,
+    todaySteps,
+    permissionGranted,
+    requestPermission,
+    refresh,
+  } = usePedometer();
 
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
-  const [todaySteps, setTodaySteps] = useState(0);
-  const [weekData, setWeekData] = useState<WeekDay[]>([]);
-  const [isLive, setIsLive] = useState(false);
-
-  // Animated progress arc value
   const progressAnim = useRef(new Animated.Value(0)).current;
-
   const progressPercent = Math.min(todaySteps / DAILY_GOAL, 1);
   const calories = Math.round(todaySteps * KCAL_PER_STEP);
   const distanceKm = ((todaySteps * METERS_PER_STEP) / 1000).toFixed(2);
 
-  // Check availability + fetch today's steps
-  useEffect(() => {
-    let subscription: ReturnType<typeof Pedometer.watchStepCount> | null = null;
-
-    const init = async () => {
-      const available = await Pedometer.isAvailableAsync();
-      setIsAvailable(available);
-
-      if (!available) return;
-
-      // Read today's steps (from midnight to now)
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(0, 0, 0, 0);
-
-      try {
-        const result = await Pedometer.getStepCountAsync(midnight, now);
-        setTodaySteps(result.steps);
-      } catch (e) {
-        console.warn("getStepCountAsync failed:", e);
-      }
-
-      // Live subscription for new steps
-      subscription = Pedometer.watchStepCount((result) => {
-        setTodaySteps((prev) => prev + result.steps);
-        setIsLive(true);
-      });
-
-      // Fetch last 7 days
-      await fetchWeekData();
-    };
-
-    init();
-
-    return () => {
-      subscription?.remove();
-    };
-  }, []);
-
-  // Animate progress ring when steps change
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: progressPercent,
@@ -89,59 +41,24 @@ export default function StepsScreen() {
     }).start();
   }, [progressPercent]);
 
-  const fetchWeekData = async () => {
-    const pastDays: WeekDay[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const start = new Date();
-      start.setDate(start.getDate() - i);
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date();
-      end.setDate(end.getDate() - i);
-      end.setHours(23, 59, 59, 999);
-
-      try {
-        if (Platform.OS === "android") {
-          // expo-sensors ne podržava povijest na Androidu, bacit će grešku
-          // Stavit ćemo 0 za graf da izbjegnemo rušenje ekrana
-          pastDays.push({
-            label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
-            steps: 0,
-          });
-        } else {
-          const result = await Pedometer.getStepCountAsync(start, end);
-          pastDays.push({
-            label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
-            steps: result.steps,
-          });
-        }
-      } catch (e) {
-        // Fallback u slučaju greške
-        pastDays.push({
-          label: start.toLocaleDateString("hr-HR", { weekday: "short" }),
-          steps: 0,
-        });
-      }
-    }
-
-    setWeekData(pastDays);
-  };
-
-  const maxWeekSteps = Math.max(...weekData.map((d) => d.steps), 1);
-
-  const handleNotAvailable = () => {
-    Alert.alert(
-      "Senzor nije dostupan",
-      "Tvoj uređaj ne podržava pedometar, ili je potrebno odobriti dozvolu za praćenje aktivnosti.",
-      [{ text: "OK" }]
-    );
-  };
-
-  // Circular progress - simulate with a filled bar since RN doesn't have SVG natively
   const ringFill = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
+
+  const handleNotAvailable = () => {
+    Alert.alert(
+      "Senzor nije dostupan",
+      Platform.OS === "android"
+        ? "Instaliraj Health Connect aplikaciju iz Play Storea i dozvoli pristup podacima o koracima."
+        : "Tvoj uređaj ne podržava pedometar ili je potrebno odobriti dozvolu za praćenje aktivnosti.",
+      [{ text: "OK" }],
+    );
+  };
+
+  const showNotAvailable = !isLoading && !isAvailable;
+  const showPermissionPrompt = !isLoading && isAvailable && !permissionGranted;
+  const showData = !isLoading && isAvailable && permissionGranted;
 
   return (
     <ScrollView
@@ -160,30 +77,57 @@ export default function StepsScreen() {
           <Text style={styles.headerTitle}>Koraci 🚶</Text>
           <Text style={styles.headerSub}>Dnevni pregled aktivnosti</Text>
         </View>
-        <View style={[styles.liveBadge, { opacity: isLive ? 1 : 0.3 }]}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE</Text>
-        </View>
+        {showData && Platform.OS === "android" && (
+          <Pressable style={styles.refreshBtn} onPress={refresh}>
+            <Ionicons name="refresh-outline" size={20} color="#64748B" />
+          </Pressable>
+        )}
+        {showData && Platform.OS === "ios" && (
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
+        )}
       </View>
 
-      {/* Unavailable state */}
-      {isAvailable === false && (
+      {/* Not available */}
+      {showNotAvailable && (
         <Pressable style={styles.unavailableCard} onPress={handleNotAvailable}>
           <Ionicons name="warning-outline" size={32} color="#F97316" />
           <Text style={styles.unavailableTitle}>Pedometar nije dostupan</Text>
           <Text style={styles.unavailableSub}>
-            Senzor nije podržan na ovom uređaju ili emulatorima.{"\n"}
-            Testiraj na fizičkom uređaju.
+            {Platform.OS === "android"
+              ? "Health Connect nije pronađen. Instaliraj ga iz Play Storea."
+              : "Senzor nije podržan na ovom uređaju ili emulatorima.\nTestiraj na fizičkom uređaju."}
           </Text>
         </Pressable>
       )}
 
-      {/* Main progress ring card */}
-      {isAvailable !== false && (
+      {/* Permission prompt (Android) */}
+      {showPermissionPrompt && (
+        <Pressable style={styles.permissionCard} onPress={requestPermission}>
+          <Ionicons name="footsteps-outline" size={32} color="#38BDF8" />
+          <Text style={styles.permissionTitle}>Dozvoli praćenje koraka</Text>
+          <Text style={styles.permissionSub}>
+            Tap za otvaranje Health Connect dozvola.
+          </Text>
+          <View style={styles.permissionBtn}>
+            <Text style={styles.permissionBtnText}>Dozvoli pristup</Text>
+          </View>
+        </Pressable>
+      )}
+
+      {/* Loading */}
+      {isLoading && (
+        <View style={styles.ringCard}>
+          <Text style={styles.ringLabel}>Učitavanje...</Text>
+        </View>
+      )}
+
+      {/* Main progress ring */}
+      {showData && (
         <View style={styles.ringCard}>
           <Text style={styles.ringLabel}>Dnevni cilj</Text>
-
-          {/* Outer ring */}
           <View style={styles.ringOuter}>
             <View style={styles.ringTrack}>
               <Animated.View
@@ -197,8 +141,6 @@ export default function StepsScreen() {
                 ]}
               />
             </View>
-
-            {/* Center content */}
             <View style={styles.ringCenter}>
               <Text
                 style={[
@@ -209,19 +151,19 @@ export default function StepsScreen() {
                 {todaySteps.toLocaleString()}
               </Text>
               <Text style={styles.stepUnit}>koraka</Text>
-              <Text style={styles.stepGoal}>/ {DAILY_GOAL.toLocaleString()}</Text>
+              <Text style={styles.stepGoal}>
+                / {DAILY_GOAL.toLocaleString()}
+              </Text>
             </View>
           </View>
 
-          {/* Progress bar */}
           <View style={styles.progressBarTrack}>
             <Animated.View
               style={[
                 styles.progressBarFill,
                 {
                   width: ringFill,
-                  backgroundColor:
-                    progressPercent >= 1 ? "#4ADE80" : "#F97316",
+                  backgroundColor: progressPercent >= 1 ? "#4ADE80" : "#F97316",
                 },
               ]}
             />
@@ -236,7 +178,7 @@ export default function StepsScreen() {
       )}
 
       {/* Stats row */}
-      {isAvailable !== false && (
+      {showData && (
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { borderColor: "#F9731630" }]}>
             <Ionicons name="flame-outline" size={22} color="#F97316" />
@@ -268,87 +210,38 @@ export default function StepsScreen() {
         </View>
       )}
 
-      {/* Weekly chart */}
-      {weekData.length > 0 && (
-        <>
-          <Text style={styles.sectionTitle}>Tjedni pregled</Text>
-          <View style={styles.chartCard}>
-            {weekData.map((day, index) => {
-              const barHeight = Math.max(
-                (day.steps / maxWeekSteps) * 120,
-                4
-              );
-              const isToday = index === weekData.length - 1;
-              return (
-                <View key={index} style={styles.chartColumn}>
-                  <Text style={styles.chartStepCount}>
-                    {day.steps > 999
-                      ? `${(day.steps / 1000).toFixed(1)}k`
-                      : day.steps}
-                  </Text>
-                  <View style={styles.barContainer}>
-                    <View
-                      style={[
-                        styles.bar,
-                        {
-                          height: barHeight,
-                          backgroundColor: isToday
-                            ? "#F97316"
-                            : day.steps >= DAILY_GOAL
-                            ? "#4ADE80"
-                            : "#334155",
-                          borderColor: isToday ? "#F97316" : "transparent",
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.chartDayLabel,
-                      { color: isToday ? "#F97316" : "#64748B" },
-                    ]}
-                  >
-                    {day.label}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Legend */}
-          <View style={styles.legend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#F97316" }]} />
-              <Text style={styles.legendText}>Danas</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#4ADE80" }]} />
-              <Text style={styles.legendText}>Cilj ostvaren</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#334155" }]} />
-              <Text style={styles.legendText}>Ostali dani</Text>
-            </View>
-          </View>
-        </>
+      {/* Android note — no historical week data */}
+      {showData && Platform.OS === "android" && (
+        <View style={styles.androidNote}>
+          <Ionicons
+            name="information-circle-outline"
+            size={16}
+            color="#64748B"
+          />
+          <Text style={styles.androidNoteText}>
+            Tjedni graf nije dostupan na Androidu — Health Connect ne pruža
+            povijesne podatke po danu..
+          </Text>
+        </View>
       )}
 
       {/* Tips card */}
-      <View style={styles.tipsCard}>
-        <Ionicons name="bulb-outline" size={22} color="#FBBF24" />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.tipsTitle}>Savjet dana</Text>
-          <Text style={styles.tipsSub}>
-            10.000 koraka dnevno odgovara ~5 km hodanja i pomaže u poboljšanju
-            kardiovaskularnog zdravlja i sagorijevanju kalorija.
-          </Text>
+      {showData && (
+        <View style={styles.tipsCard}>
+          <Ionicons name="bulb-outline" size={22} color="#FBBF24" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.tipsTitle}>Savjet dana</Text>
+            <Text style={styles.tipsSub}>
+              10.000 koraka dnevno odgovara ~5 km hodanja i pomaže u poboljšanju
+              kardiovaskularnog zdravlja i sagorijevanju kalorija.
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
-      {/* Platform note */}
       {Platform.OS !== "ios" && Platform.OS !== "android" && (
         <Text style={styles.platformNote}>
-          ⚠️ Pedometar radi samo na fizičkim iOS/Android uređajima.
+          Pedometar radi samo na fizičkim iOS/Android uređajima.
         </Text>
       )}
     </ScrollView>
@@ -356,31 +249,27 @@ export default function StepsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#0F172A",
-  },
-  content: {
-    padding: 20,
-    gap: 0,
-  },
+  root: { flex: 1, backgroundColor: "#0F172A" },
+  content: { padding: 20, gap: 0 },
 
-  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 24,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#F8FAFC",
-  },
-  headerSub: {
-    fontSize: 13,
-    color: "#64748B",
-    marginTop: 2,
+  headerTitle: { fontSize: 26, fontWeight: "800", color: "#F8FAFC" },
+  headerSub: { fontSize: 13, color: "#64748B", marginTop: 2 },
+
+  refreshBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#334155",
+    alignItems: "center",
+    justifyContent: "center",
   },
   liveBadge: {
     flexDirection: "row",
@@ -393,12 +282,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#334155",
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#4ADE80",
-  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ADE80" },
   liveText: {
     fontSize: 11,
     fontWeight: "700",
@@ -406,7 +290,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Unavailable
   unavailableCard: {
     backgroundColor: "#1E293B",
     borderRadius: 20,
@@ -417,11 +300,7 @@ const styles = StyleSheet.create({
     borderColor: "#F9731630",
     marginBottom: 20,
   },
-  unavailableTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#F8FAFC",
-  },
+  unavailableTitle: { fontSize: 17, fontWeight: "700", color: "#F8FAFC" },
   unavailableSub: {
     fontSize: 13,
     color: "#64748B",
@@ -429,7 +308,27 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Ring card
+  permissionCard: {
+    backgroundColor: "#1E293B",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "#38BDF830",
+    marginBottom: 20,
+  },
+  permissionTitle: { fontSize: 17, fontWeight: "700", color: "#F8FAFC" },
+  permissionSub: { fontSize: 13, color: "#64748B", textAlign: "center" },
+  permissionBtn: {
+    backgroundColor: "#38BDF8",
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  permissionBtnText: { color: "#0F172A", fontWeight: "800", fontSize: 14 },
+
   ringCard: {
     backgroundColor: "#1E293B",
     borderRadius: 24,
@@ -469,31 +368,12 @@ const styles = StyleSheet.create({
     borderRadius: 90,
     overflow: "hidden",
   },
-  ringFill: {
-    width: "100%",
-    opacity: 0.25,
-  },
-  ringCenter: {
-    alignItems: "center",
-    zIndex: 1,
-  },
-  stepCount: {
-    fontSize: 36,
-    fontWeight: "800",
-    color: "#F8FAFC",
-  },
-  stepUnit: {
-    fontSize: 13,
-    color: "#64748B",
-    fontWeight: "600",
-  },
-  stepGoal: {
-    fontSize: 11,
-    color: "#475569",
-    marginTop: 2,
-  },
+  ringFill: { width: "100%", opacity: 0.25 },
+  ringCenter: { alignItems: "center", zIndex: 1 },
+  stepCount: { fontSize: 36, fontWeight: "800", color: "#F8FAFC" },
+  stepUnit: { fontSize: 13, color: "#64748B", fontWeight: "600" },
+  stepGoal: { fontSize: 11, color: "#475569", marginTop: 2 },
 
-  // Progress bar
   progressBarTrack: {
     width: "100%",
     height: 8,
@@ -501,22 +381,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: "hidden",
   },
-  progressBarFill: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  progressLabel: {
-    fontSize: 13,
-    color: "#94A3B8",
-    fontWeight: "600",
-  },
+  progressBarFill: { height: "100%", borderRadius: 4 },
+  progressLabel: { fontSize: 13, color: "#94A3B8", fontWeight: "600" },
 
-  // Stats
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 28,
-  },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
   statCard: {
     flex: 1,
     backgroundColor: "#1E293B",
@@ -527,87 +395,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#334155",
   },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  statLabel: {
-    fontSize: 10,
-    color: "#64748B",
-    textAlign: "center",
-  },
+  statValue: { fontSize: 18, fontWeight: "800" },
+  statLabel: { fontSize: 10, color: "#64748B", textAlign: "center" },
 
-  // Section title
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#F8FAFC",
-    marginBottom: 14,
-  },
-
-  // Chart
-  chartCard: {
-    backgroundColor: "#1E293B",
-    borderRadius: 20,
-    padding: 20,
+  androidNote: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#334155",
-    marginBottom: 12,
-    height: 190,
-  },
-  chartColumn: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  chartStepCount: {
-    fontSize: 9,
-    color: "#475569",
-    marginBottom: 4,
-  },
-  barContainer: {
-    height: 120,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  bar: {
-    width: 22,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  chartDayLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 4,
-  },
-
-  // Legend
-  legend: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 24,
+    gap: 8,
+    alignItems: "flex-start",
+    marginBottom: 16,
     paddingHorizontal: 4,
   },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    color: "#64748B",
-  },
+  androidNoteText: { fontSize: 12, color: "#475569", flex: 1, lineHeight: 18 },
 
-  // Tips
   tipsCard: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -625,13 +424,8 @@ const styles = StyleSheet.create({
     color: "#FBBF24",
     marginBottom: 4,
   },
-  tipsSub: {
-    fontSize: 12,
-    color: "#94A3B8",
-    lineHeight: 19,
-  },
+  tipsSub: { fontSize: 12, color: "#94A3B8", lineHeight: 19 },
 
-  // Platform note
   platformNote: {
     fontSize: 12,
     color: "#475569",
