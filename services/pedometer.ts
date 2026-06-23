@@ -1,6 +1,7 @@
 import { Pedometer } from "expo-sensors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus, Platform } from "react-native";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 
 interface PedometerState {
   isAvailable: boolean;
@@ -65,6 +66,7 @@ export function usePedometer() {
   // --- Android implementation ---
   const fetchAndroidSteps = useCallback(async () => {
     try {
+      if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return;
       const HC = await import("react-native-health-connect");
       const result = await HC.readRecords("Steps", {
         timeRangeFilter: {
@@ -93,6 +95,20 @@ export function usePedometer() {
 
   const initAndroid = useCallback(async () => {
     try {
+      if (
+        Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+      ) {
+        // Expo Go: Health Connect not supported
+        setState({
+          isAvailable: false,
+          isLoading: false,
+          todaySteps: 0,
+          error: "Health Connect requires a custom dev client, unsupported in Expo Go.",
+          permissionGranted: false,
+        });
+        return;
+      }
+
       const HC = await import("react-native-health-connect");
       const sdkStatus = await HC.getSdkStatus();
       const initialized = await HC.initialize();
@@ -171,6 +187,7 @@ export function usePedometer() {
 
   const requestPermission = useCallback(async () => {
     if (Platform.OS !== "android") return;
+    if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return;
 
     const tryRequest = async (): Promise<boolean> => {
       const HC = await import("react-native-health-connect");

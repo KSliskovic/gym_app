@@ -37,10 +37,10 @@
 
 | Naziv Zadatka | Opis | Odgovorni član | Rok |
 | :--- | :--- | :--- | :--- |
-| **1. Konfiguracija Storage-a** | Postavljanje Supabase Storage okruženja za pohranu datoteka u oblaku. | Ivan Luetić | U tijeku |
-| **2. Upload profilne slike** | Implementacija *image pickera* i funkcionalnosti za upload datoteka na Supabase. | Ivan Luetić | U tijeku |
-| **3. Prikaz datoteka** | Dohvaćanje i pregled slika/datoteka iz oblaka unutar aplikacije. | Ivan Luetić | Nije započeto |
-| **4. Organizacija datoteka** | Optimizacija i strukturiranje datoteka u oblaku prema korisnicima. | Ivan Luetić | Nije započeto |
+| **1. Konfiguracija Storage-a** | Postavljanje Supabase Storage okruženja za pohranu datoteka u oblaku. | Ivan Luetić | Završeno |
+| **2. Upload profilne slike** | Implementacija *image pickera* i funkcionalnosti za upload datoteka na Supabase. | Ivan Luetić | Završeno |
+| **3. Prikaz datoteka** | Dohvaćanje i pregled slika/datoteka iz oblaka unutar aplikacije. | Ivan Luetić | Završeno |
+| **4. Organizacija datoteka** | Optimizacija i strukturiranje datoteka u oblaku prema korisnicima. | Ivan Luetić | Završeno |
 
 ---
 
@@ -54,5 +54,5 @@
 | **3. Vizualizacija podataka senzora** | Prikaz povijesti podataka sa senzora (zadnjih 7 dana) na grafikonu. | Ivan Luetić | Završeno |
 | **4. Dijeljenje treninga (QR kod)** | Prijenos splitova između korisnika putem generiranja i skeniranja QR koda. | Kristijan | Završeno |
 | **5. Korisnički profil i postavke** | Unos korisničkih podataka i izračun makronutrijenata, uz lokalno spremanje. | Kristijan | Završeno |
-| **6. Ažuriranje pedometra (Google Fit)** | Prijelaz na stabilnije praćenje koraka na Androidu, potencijalno putem Google Fit integracije. | Ivan Luetić | Nije započeto |
-| **7. QA Testiranje** | Detaljno testiranje senzora, uploadanja i komunikacije s bazom na uređajima. | Frano Vranjković | U tijeku |
+| **6. Ažuriranje pedometra (Health Connect)** | Prijelaz na stabilnije praćenje koraka na Androidu putem Health Connect integracije. | Ivan Luetić | Završeno |
+| **7. QA Testiranje** | Detaljno testiranje senzora, uploadanja i komunikacije s bazom na uređajima. | Frano Vranjković | Završeno |
